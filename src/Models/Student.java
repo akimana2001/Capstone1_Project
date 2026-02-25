@@ -38,10 +38,12 @@ public abstract class Student extends Person {
 
 
     public void setGPA(double GPA) {
+
         this.GPA = GPA;
     }
 
     public void setDepartment(String department) {
+
         this.department = department;
     }
 

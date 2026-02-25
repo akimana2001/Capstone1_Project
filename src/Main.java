@@ -11,9 +11,9 @@ public class Main {
         UniversityManager manager = new UniversityManager();
         Scanner scanner = new Scanner(System.in);
 
-        // Load saved data
         FileManager.loadStudents(manager.getStudents());
         FileManager.loadCourses(manager.getCourses());
+        FileManager.loadEnrollments(manager.getStudents(), manager.getCourses());
 
         boolean running = true;
 
@@ -25,154 +25,119 @@ public class Main {
             System.out.println("3. Enroll Student in Course");
             System.out.println("4. View Student Record");
             System.out.println("5. Generate Dean's List");
-            System.out.println("6. Show Statistics (Average GPA + Top Student)");
+            System.out.println("6. Show Statistics");
             System.out.println("7. Save and Exit");
             System.out.print("Choose option: ");
 
-            int choice;
-            try {
-                choice = Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number.");
-                continue;
-            }
+            int choice = Integer.parseInt(scanner.nextLine());
 
             switch (choice) {
 
-                // Register Student
-
                 case 1:
-                    try {
-                        System.out.print("Student ID: ");
-                        String id = scanner.nextLine();
+                    System.out.print("1. Graduate  2. Undergraduate: ");
+                    int type = Integer.parseInt(scanner.nextLine());
 
-                        System.out.print("Name: ");
-                        String name = scanner.nextLine();
+                    System.out.print("Student ID: ");
+                    String id = scanner.nextLine();
 
-                        System.out.print("GPA: ");
-                        double gpa = Double.parseDouble(scanner.nextLine());
+                    System.out.print("Name: ");
+                    String name = scanner.nextLine();
 
-                        System.out.print("Department: ");
-                        String dept = scanner.nextLine();
+                    System.out.print("Email: ");
+                    String email = scanner.nextLine();
 
-                        Student student = new GraduateStudent(
-                                "AUTO", name, "auto@email.com",
-                                id, gpa, dept
-                        );
+                    System.out.print("GPA: ");
+                    double gpa = Double.parseDouble(scanner.nextLine());
 
-                        manager.registerStudent(student);
-                        System.out.println("Student registered successfully.");
+                    System.out.print("Department: ");
+                    String dept = scanner.nextLine();
 
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("Registration failed: " + e.getMessage());
-                    }
+                    Student student = (type == 1)
+                            ? new GraduateStudent("AUTO", name, email, id, gpa, dept)
+                            : new UndergraduateStudent("AUTO", name, email, id, gpa, dept);
+
+                    manager.registerStudent(student);
                     break;
-
-                // Register Course
 
                 case 2:
-                    try {
-                        System.out.print("Course Code: ");
-                        String courseCode = scanner.nextLine();
+                    System.out.print("Course Code: ");
+                    String code = scanner.nextLine();
 
-                        System.out.print("Course Name: ");
-                        String courseName = scanner.nextLine();
+                    System.out.print("Course Name: ");
+                    String cname = scanner.nextLine();
 
-                        System.out.print("Credits: ");
-                        int credits = Integer.parseInt(scanner.nextLine());
+                    System.out.print("Credits: ");
+                    int credits = Integer.parseInt(scanner.nextLine());
 
-                        System.out.print("Capacity: ");
-                        int capacity = Integer.parseInt(scanner.nextLine());
+                    System.out.print("Capacity: ");
+                    int cap = Integer.parseInt(scanner.nextLine());
 
-                        Course course = new Course(courseCode, courseName, credits, capacity);
-                        manager.createCourse(course);
-
-                        System.out.println("Course registered successfully.");
-
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid numeric input.");
-                    }
+                    manager.createCourse(new Course(code, cname, credits, cap));
                     break;
-
-                // Enroll Student
 
                 case 3:
                     System.out.print("Student ID: ");
-                    String studentId = scanner.nextLine();
+                    String sid = scanner.nextLine();
 
                     System.out.print("Course Code: ");
-                    String enrollCourseCode = scanner.nextLine();
+                    String cc = scanner.nextLine();
 
-                    Student student = manager.getStudents().stream()
-                            .filter(st -> st.getStudentID().equals(studentId))
-                            .findFirst()
-                            .orElse(null);
+                    Student st = manager.getStudents().stream()
+                            .filter(s -> s.getStudentID().equals(sid))
+                            .findFirst().orElse(null);
 
-                    Course course = manager.getCourses().stream()
-                            .filter(co -> co.getCourseCode().equals(enrollCourseCode))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (student == null || course == null) {
-                        System.out.println("Student or Course not found.");
-                        break;
-                    }
+                    Course co = manager.getCourses().stream()
+                            .filter(c -> c.getCourseCode().equals(cc))
+                            .findFirst().orElse(null);
 
                     try {
-                        manager.enrollStudentInCourse(student, course);
+                        manager.enrollStudentInCourse(st, co);
                         System.out.println("Enrollment successful.");
-                    } catch (CourseFullException | StudentAlreadyEnrolledException e) {
-                        System.out.println("Enrollment failed: " + e.getMessage());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
                     }
                     break;
-
-                // View Student Record
 
                 case 4:
                     System.out.print("Student ID: ");
-                    String sid = scanner.nextLine();
+                    String sidView = scanner.nextLine();
 
                     manager.getStudents().stream()
-                            .filter(st -> st.getStudentID().equals(sid))
+                            .filter(s -> s.getStudentID().equals(sidView))
                             .findFirst()
-                            .ifPresentOrElse(st -> {
-                                System.out.println("Name: " + st.getName());
-                                System.out.println("GPA: " + st.getGPA());
-                                System.out.println("Courses: " + st.getEnrolledCourses().keySet());
-                            }, () -> System.out.println("Student not found."));
+                            .ifPresentOrElse(s -> {
+                                System.out.println("Name: " + s.getName());
+                                System.out.println("GPA: " + s.getGPA());
+                                System.out.println("Courses:");
+                                s.getEnrolledCourses().forEach((c, g) ->
+                                        System.out.println(c.getCourseCode() + " -> " + g));
+                            }, () -> System.out.println("Student not found"));
                     break;
-
-                // Dean's List
 
                 case 5:
                     System.out.println("Dean's List (GPA > 3.5)");
                     manager.getStudents().stream()
-                            .filter(st -> st.getGPA() > 3.5)
-                            .forEach(st ->
-                                    System.out.println(st.getName() + " - " + st.getGPA())
-                            );
+                            .filter(s -> s.getGPA() > 3.5)
+                            .forEach(s ->
+                                    System.out.println(s.getName() + " - " + s.getGPA()));
                     break;
-
-                // Lab2 Statistics
 
                 case 6:
                     System.out.print("Department: ");
-                    String department = scanner.nextLine();
+                    String d = scanner.nextLine();
 
-                    double avg = manager.calculateAverageGPAByDepartment(department);
+                    double avg = manager.calculateAverageGPAByDepartment(d);
                     System.out.println("Average GPA: " + avg);
 
                     manager.findTopStudent()
-                            .ifPresent(top ->
-                                    System.out.println("Top Student: " + top.getName())
-                            );
+                            .ifPresent(s -> System.out.println("Top Student: " + s.getName()));
                     break;
 
-                // Save & Exit
                 case 7:
                     FileManager.saveStudents(manager.getStudents());
                     FileManager.saveCourses(manager.getCourses());
-                    System.out.println("Data saved. Goodbye!");
+                    FileManager.saveEnrollments(manager.getStudents());
+                    System.out.println("Saved. Goodbye!");
                     running = false;
                     break;
 
@@ -180,7 +145,5 @@ public class Main {
                     System.out.println("Invalid option.");
             }
         }
-
-        scanner.close();
     }
 }

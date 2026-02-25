@@ -1,6 +1,5 @@
 import Models.*;
 import Service.*;
-import Exceptions.*;
 
 import java.util.Scanner;
 
@@ -13,7 +12,7 @@ public class Main {
 
         FileManager.loadStudents(manager.getStudents());
         FileManager.loadCourses(manager.getCourses());
-        FileManager.loadEnrollments(manager.getStudents(), manager.getCourses());
+        FileManager.saveEnrollments(manager.getStudents());
 
         boolean running = true;
 

@@ -13,15 +13,35 @@ public class UniversityManager {
     private List<Student> students = new ArrayList<>();
     private List<Course> courses = new ArrayList<>();
 
-
-    // The  Registration of the Studtens and the Courses
-
-
+    // Register Student
     public void registerStudent(Student student) {
+
+        boolean exists = students.stream()
+                .anyMatch(s -> s.getStudentID()
+                        .equals(student.getStudentID()));
+
+        if (exists) {
+            System.out.println("Student with ID "
+                    + student.getStudentID() + " already exists.");
+            return;
+        }
+
         students.add(student);
     }
 
+    // Create Course
     public void createCourse(Course course) {
+
+        boolean exists = courses.stream()
+                .anyMatch(c -> c.getCourseCode()
+                        .equalsIgnoreCase(course.getCourseCode()));
+
+        if (exists) {
+            System.out.println("Course "
+                    + course.getCourseCode() + " already exists.");
+            return;
+        }
+
         courses.add(course);
     }
 
@@ -33,52 +53,57 @@ public class UniversityManager {
         return courses;
     }
 
-
-    // The Enrollments of the students to the course
-
+    // Enrollment Logic
     public void enrollStudentInCourse(Student student, Course course)
             throws CourseFullException, StudentAlreadyEnrolledException {
 
-        //   Checking the capacity of the Course
+        if (student == null || course == null) {
+            throw new IllegalArgumentException("Student or Course cannot be null");
+        }
+
         if (course.isFull()) {
             throw new CourseFullException(
                     "Course " + course.getCourseCode() + " is full.");
         }
 
-        // Duplicating the  enrollment check
         if (student.getEnrolledCourses().containsKey(course)) {
             throw new StudentAlreadyEnrolledException(
-                    "Student already enrolled in " + course.getCourseCode());
+                    "Student already enrolled in "
+                            + course.getCourseCode());
         }
 
-        // Performing enrollment
         course.addStudent(student);
-        student.enrollCourse(course, 0.0); // default grade
+        student.enrollCourse(course, 0.0);
     }
 
-
-    // Assigning the  Grades
-
-
+    // Assign Grades
     public void assignGrade(Student student, Course course, double grade) {
 
-        if (student.getEnrolledCourses().containsKey(course)) {
-            student.getEnrolledCourses().put(course, grade);
+        if (!student.getEnrolledCourses().containsKey(course)) {
+            System.out.println("Student not enrolled in this course.");
+            return;
         }
+
+        if (grade < 0 || grade > 100) {
+            System.out.println("Grade must be between 0 and 100.");
+            return;
+        }
+
+        student.getEnrolledCourses().put(course, grade);
     }
 
-
-    // Calculating the Average GPA by department
+    // Average GPA by Department
     public double calculateAverageGPAByDepartment(String department) {
 
         return students.stream()
-                .filter(s -> s.getDepartment().equalsIgnoreCase(department))
+                .filter(s -> s.getDepartment()
+                        .equalsIgnoreCase(department))
                 .mapToDouble(Student::getGPA)
                 .average()
                 .orElse(0.0);
     }
 
-    // Finding the top performing student
+    // Find Top Student
     public Optional<Student> findTopStudent() {
 
         return students.stream()

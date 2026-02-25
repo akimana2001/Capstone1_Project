@@ -11,7 +11,7 @@ public class FileManager {
     private static final String COURSE_FILE = "courses.txt";
     private static final String ENROLL_FILE = "enrollments.txt";
 
-    //  Save files
+    // Save the files
 
     public static void saveStudents(List<Student> students) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(STUDENT_FILE))) {
@@ -66,7 +66,7 @@ public class FileManager {
         }
     }
 
-    //  Loading files
+    // Load the files
 
     public static void loadStudents(List<Student> students) {
         File file = new File(STUDENT_FILE);

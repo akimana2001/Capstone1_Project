@@ -3,67 +3,88 @@ package Service;
 import Models.*;
 
 import java.io.*;
-import java.util.List;
+import java.util.*;
 
 public class FileManager {
 
     private static final String STUDENT_FILE = "students.txt";
     private static final String COURSE_FILE = "courses.txt";
+    private static final String ENROLL_FILE = "enrollments.txt";
 
-    // Saving Records
+    // Save the files
 
     public static void saveStudents(List<Student> students) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(STUDENT_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STUDENT_FILE))) {
+
             for (Student s : students) {
-                writer.println(
+                String type = (s instanceof GraduateStudent) ? "GRAD" : "UNDER";
+
+                writer.write(type + "," +
                         s.getStudentID() + "," +
-                                s.getName() + "," +
-                                s.getGPA() + "," +
-                                s.getDepartment()
-                );
+                        s.getName() + "," +
+                        s.getEmail() + "," +
+                        s.getGPA() + "," +
+                        s.getDepartment());
+                writer.newLine();
             }
+
         } catch (IOException e) {
             System.out.println("Error saving students.");
         }
     }
 
     public static void saveCourses(List<Course> courses) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(COURSE_FILE))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(COURSE_FILE))) {
+
             for (Course c : courses) {
-                writer.println(
-                        c.getCourseCode() + "," +
-                                c.getCourseName() + "," +
-                                c.getCredits()
-                );
+                writer.write(c.getCourseCode() + "," +
+                        c.getCourseName() + "," +
+                        c.getCredits() + "," +
+                        c.getEnrolledStudents().size());
+                writer.newLine();
             }
+
         } catch (IOException e) {
             System.out.println("Error saving courses.");
         }
     }
 
-    // Reading the Records
+    public static void saveEnrollments(List<Student> students) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ENROLL_FILE))) {
+
+            for (Student s : students) {
+                for (Map.Entry<Course, Double> entry : s.getEnrolledCourses().entrySet()) {
+                    writer.write(s.getStudentID() + "," +
+                            entry.getKey().getCourseCode() + "," +
+                            entry.getValue());
+                    writer.newLine();
+                }
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error saving enrollments.");
+        }
+    }
+
+    // Load the files
 
     public static void loadStudents(List<Student> students) {
         File file = new File(STUDENT_FILE);
         if (!file.exists()) return;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
             String line;
             while ((line = reader.readLine()) != null) {
+                String[] d = line.split(",");
 
-                String[] data = line.split(",");
+                Student s = d[0].equals("GRAD")
+                        ? new GraduateStudent("AUTO", d[2], d[3], d[1], Double.parseDouble(d[4]), d[5])
+                        : new UndergraduateStudent("AUTO", d[2], d[3], d[1], Double.parseDouble(d[4]), d[5]);
 
-                Student student = new GraduateStudent(
-                        "AUTO",
-                        data[1],
-                        "auto@email.com",
-                        data[0],
-                        Double.parseDouble(data[2]),
-                        data[3]
-                );
-
-                students.add(student);
+                students.add(s);
             }
+
         } catch (IOException e) {
             System.out.println("Error loading students.");
         }
@@ -74,22 +95,48 @@ public class FileManager {
         if (!file.exists()) return;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
             String line;
             while ((line = reader.readLine()) != null) {
+                String[] d = line.split(",");
 
-                String[] data = line.split(",");
-
-                Course course = new Course(
-                        data[0],
-                        data[1],
-                        Integer.parseInt(data[2]),
-                        50
-                );
-
-                courses.add(course);
+                courses.add(new Course(
+                        d[0], d[1],
+                        Integer.parseInt(d[2]), 50));
             }
+
         } catch (IOException e) {
             System.out.println("Error loading courses.");
+        }
+    }
+
+    public static void loadEnrollments(List<Student> students, List<Course> courses) {
+
+        File file = new File(ENROLL_FILE);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] d = line.split(",");
+
+                Student s = students.stream()
+                        .filter(st -> st.getStudentID().equals(d[0]))
+                        .findFirst().orElse(null);
+
+                Course c = courses.stream()
+                        .filter(co -> co.getCourseCode().equals(d[1]))
+                        .findFirst().orElse(null);
+
+                if (s != null && c != null) {
+                    s.getEnrolledCourses().put(c, Double.parseDouble(d[2]));
+                    c.getEnrolledStudents().add(s);
+                }
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error loading enrollments.");
         }
     }
 }
